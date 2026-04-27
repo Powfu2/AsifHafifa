@@ -21,7 +21,7 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  '/resourceName': {
+  '/products': {
     parameters: {
       query?: never;
       header?: never;
@@ -29,10 +29,10 @@ export type paths = {
       cookie?: never;
     };
     /** gets the resource */
-    get: operations['getResourceName'];
+    get: operations['getProducts'];
     put?: never;
-    /** creates a new record of type resource */
-    post: operations['createResource'];
+    /** creates a new record of type product */
+    post: operations['createProduct'];
     delete?: never;
     options?: never;
     head?: never;
@@ -43,15 +43,31 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    GeoJsonPolygon: {
+      /** @enum {string} */
+      type: 'Polygon';
+      coordinates: number[][][];
+    };
     error: {
       message: string;
     };
-    resource: {
-      /** Format: int64 */
-      id: number;
-      name: string;
-      description: string;
+    Product: {
+      /** Format: uuid */
+      id?: string;
+      name?: string;
+      description?: string;
+      bounding_polygon?: components['schemas']['GeoJsonPolygon'];
+      consumption_link?: string | null;
+      /** Format: double */
+      resolution_best?: number;
+      min_zoom?: number;
+      max_zoom?: number;
+      /** @enum {string} */
+      type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+      /** @enum {string} */
+      consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
     };
+    Products: components['schemas']['Product'][];
     anotherResource: {
       kind: string;
       isAlive: boolean;
@@ -94,22 +110,25 @@ export interface operations {
       };
     };
   };
-  getResourceName: {
+  getProducts: {
     parameters: {
-      query?: never;
+      query?: {
+        name?: string;
+        type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+      };
       header?: never;
       path?: never;
       cookie?: never;
     };
     requestBody?: never;
     responses: {
-      /** @description OK */
+      /** @description A JSON array of products */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['resource'];
+          'application/json': components['schemas']['Products'];
         };
       };
       /** @description Bad Request */
@@ -123,7 +142,7 @@ export interface operations {
       };
     };
   };
-  createResource: {
+  createProduct: {
     parameters: {
       query?: never;
       header?: never;
@@ -132,7 +151,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['resource'];
+        'application/json': components['schemas']['Product'];
       };
     };
     responses: {
@@ -142,7 +161,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['resource'];
+          'application/json': components['schemas']['Product'];
         };
       };
       /** @description Bad Request */

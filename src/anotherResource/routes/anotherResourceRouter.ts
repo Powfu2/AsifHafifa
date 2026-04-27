@@ -6,7 +6,7 @@ const anotherResourceRouterFactory: FactoryFunction<Router> = (dependencyContain
   const router = Router();
   const controller = dependencyContainer.resolve(AnotherResourceController);
 
-  router.get('/', controller.getResource);
+  // router.get('/', controller.getResource);
 
   return router;
 };

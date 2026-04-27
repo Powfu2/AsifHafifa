@@ -11,18 +11,17 @@ import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
 import { Registry } from 'prom-client';
 import type { ConfigType } from '@common/config';
 import { SERVICES } from '@common/constants';
-import { RESOURCE_NAME_ROUTER_SYMBOL } from './resourceName/routes/resourceNameRouter';
+import { PRODUCT_ROUTER_SYMBOL } from './products/routes/products';
 import { ANOTHER_RESOURCE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
-
+import { PRODUCT_SERVICE_SYMBOL } from './products/tokens';
 @injectable()
 export class ServerBuilder {
   private readonly serverInstance: express.Application;
-
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
-    @inject(RESOURCE_NAME_ROUTER_SYMBOL) private readonly resourceNameRouter: Router,
+    @inject(PRODUCT_ROUTER_SYMBOL) private readonly productsRouter: Router,
     @inject(ANOTHER_RESOURCE_ROUTER_SYMBOL) private readonly anotherResourceRouter: Router
   ) {
     this.serverInstance = express();
@@ -46,7 +45,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/resourceName', this.resourceNameRouter);
+    this.serverInstance.use('/products', this.productsRouter);
     this.serverInstance.use('/anotherResource', this.anotherResourceRouter);
     this.buildDocsRoutes();
   }
