@@ -1,7 +1,6 @@
 import { components } from '@src/openapi';
 import { Entity, Column, PrimaryGeneratedColumn, Check } from 'typeorm';
-import { ProductModel } from './products';
-
+import { ProductModel } from './products.service';
 type GeoJsonPolygon = components['schemas']['GeoJsonPolygon'];
 
 export enum ProductType {
@@ -31,7 +30,7 @@ export class ProductEntity implements ProductModel {
   name!: string;
 
   @Column({ type: 'text' })
-  description!: string;
+  description!: string | null;
 
   @Column({
     type: 'geometry',
@@ -56,11 +55,11 @@ export class ProductEntity implements ProductModel {
   consumption_protocol!: ConsumptionProtocol;
 
   @Column({ type: 'float' })
-  resolution_best!: number;
+  resolution_best!: number | null;
 
   @Column({ type: 'integer' })
-  min_zoom!: number;
+  min_zoom!: number | null;
 
   @Column({ type: 'integer' })
-  max_zoom!: number;
+  max_zoom!: number | null;
 }

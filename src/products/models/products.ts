@@ -2,19 +2,21 @@ import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import type { components } from '@openapi';
 import { SERVICES } from '@common/constants';
+import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens';
 
-const resourceInstance: ProductModel = {
+const productInstance: ProductModel = {
   id: '1',
   name: 'ronin',
   description: 'can you do a logistics run?',
 };
-const resourceInstances: ProductsModel = [
+const productInstances: ProductsModel = [
   {
     id: '1',
     name: 'ronin',
     description: 'can you do a logistics run?',
   },
 ];
+
 function generateRandomId(): number {
   const rangeOfIds = 100;
   return Math.floor(Math.random() * rangeOfIds);
@@ -28,9 +30,9 @@ export class ProductManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
   public getProducts(): ProductsModel {
-    this.logger.info({ msg: 'getting resource', count: resourceInstances.length });
+    this.logger.info({ msg: 'getting resource', count: productInstances.length });
 
-    return resourceInstances;
+    return productInstances;
   }
 
   public createProduct(resource: ProductModel): ProductModel {
@@ -40,4 +42,6 @@ export class ProductManager {
 
     return { ...resource, id: resourceId };
   }
+
+  public updateProduct(resource: ProductsModel) {}
 }

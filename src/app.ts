@@ -11,7 +11,7 @@ async function getApp(registerOptions?: RegisterOptions): Promise<[Application, 
   try {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
-      console.log('DB connected');
+      console.info('DB connected');
     }
   } catch (err) {
     console.error('DB connection error:', err);

@@ -7,12 +7,11 @@ import { type InjectionObject, registerDependencies } from '@common/dependencyRe
 import { SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
 import { PRODUCT_ROUTER_SYMBOL, productRouterFactory } from './products/routes/products';
-import { anotherResourceRouterFactory, ANOTHER_RESOURCE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
 import { getConfig } from './common/config';
 import { AppDataSource } from './common/db/data-source';
 import { ProductEntity } from './products/models/entity.products';
 import { ProductsController } from './products/controllers/products';
-import { ProductService } from './products/service/products.service';
+import { ProductManager } from './products/models/products.service';
 import { PRODUCT_CONTROLLER_SYMBOL, PRODUCT_REPOSITORY_SYMBOL, PRODUCT_SERVICE_SYMBOL } from './products/tokens';
 
 export interface RegisterOptions {
@@ -33,10 +32,9 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
-    { token: ANOTHER_RESOURCE_ROUTER_SYMBOL, provider: { useFactory: anotherResourceRouterFactory } },
 
     { token: PRODUCT_REPOSITORY_SYMBOL, provider: { useFactory: () => AppDataSource.getRepository(ProductEntity) } },
-    { token: PRODUCT_SERVICE_SYMBOL, provider: { useClass: ProductService } },
+    { token: PRODUCT_SERVICE_SYMBOL, provider: { useClass: ProductManager } },
     { token: PRODUCT_CONTROLLER_SYMBOL, provider: { useClass: ProductsController } },
     { token: PRODUCT_ROUTER_SYMBOL, provider: { useFactory: productRouterFactory } },
     {

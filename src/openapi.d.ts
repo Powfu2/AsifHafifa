@@ -39,6 +39,24 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
+  '/products/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** update product */
+    put: operations['updateProduct'];
+    post?: never;
+    /** delete product */
+    delete: operations['deleteProduct'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -49,25 +67,46 @@ export type components = {
       coordinates: number[][][];
     };
     error: {
-      message: string;
+      message?: string;
+      data?: Record<string, never>;
+      errors?: {
+        field?: string;
+        message?: string;
+      }[];
     };
     Product: {
       /** Format: uuid */
       id?: string;
       name?: string;
-      description?: string;
+      description?: string | null;
       bounding_polygon?: components['schemas']['GeoJsonPolygon'];
       consumption_link?: string | null;
       /** Format: double */
-      resolution_best?: number;
-      min_zoom?: number;
-      max_zoom?: number;
+      resolution_best?: number | null;
+      min_zoom?: number | null;
+      max_zoom?: number | null;
       /** @enum {string} */
       type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
       /** @enum {string} */
       consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
     };
     Products: components['schemas']['Product'][];
+    UpdateProduct: {
+      name?: string;
+      description?: string | null;
+      bounding_polygon?: components['schemas']['GeoJsonPolygon'];
+      consumption_link?: string | null;
+      /** @enum {string} */
+      type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+      /** @enum {string} */
+      consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
+      resolution_best?: number;
+      min_zoom?: number;
+      max_zoom?: number;
+    };
+    DeletedProductResponse: {
+      data?: components['schemas']['Product'];
+    };
     anotherResource: {
       kind: string;
       isAlive: boolean;
@@ -166,6 +205,90 @@ export interface operations {
       };
       /** @description Bad Request */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+    };
+  };
+  updateProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateProduct'];
+      };
+    };
+    responses: {
+      /** @description updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Product'];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      /** @description Product not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+    };
+  };
+  deleteProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Product deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeletedProductResponse'];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      /** @description Product not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };

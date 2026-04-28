@@ -10,9 +10,9 @@ export const productRouterFactory: FactoryFunction<Router> = (dependencyContaine
 
   router.post('/', controller.createProducts);
 
-  // router.put("/:id", controller.updateProducts)
+  router.put('/:id', controller.updateProduct);
 
-  // router.delete("/:id", controller.deleteProducts)
+  router.delete('/:id', controller.deleteProduct);
 
   return router;
 };

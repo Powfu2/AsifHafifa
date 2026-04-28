@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { ProductType, ConsumptionProtocol } from '../models/entity.products';
 
+// export const =
+
 export const expectedSchema = {
   name: 'string',
   description: 'string',
@@ -13,6 +15,22 @@ export const expectedSchema = {
   consumption_link: 'string | null (optional)',
 };
 
+export const deleteProductSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().trim().min(1).max(48),
+  description: z.string().trim().max(5000),
+  bounding_polygon: z.object({
+    type: z.literal('Polygon'),
+    coordinates: z.array(z.array(z.tuple([z.number(), z.number()]))).min(1),
+  }),
+  consumption_link: z.string().nullable().optional(),
+  type: z.nativeEnum(ProductType),
+  consumption_protocol: z.nativeEnum(ConsumptionProtocol),
+  resolution_best: z.number(),
+  min_zoom: z.number().int(),
+  max_zoom: z.number().int(),
+});
+
 export const createProductSchema = z.object({
   name: z.string().trim().min(1).max(48),
   description: z.string().trim().max(5000),
@@ -20,7 +38,6 @@ export const createProductSchema = z.object({
     type: z.literal('Polygon'),
     coordinates: z.array(z.array(z.tuple([z.number(), z.number()]))).min(1),
   }),
-
   consumption_link: z.string().nullable().optional(),
   type: z.nativeEnum(ProductType),
   consumption_protocol: z.nativeEnum(ConsumptionProtocol),

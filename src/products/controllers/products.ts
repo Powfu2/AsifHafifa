@@ -4,31 +4,29 @@ import { injectable, inject } from 'tsyringe';
 import { type Registry, Counter } from 'prom-client';
 import type { TypedRequestHandlers } from '@openapi';
 import { SERVICES } from '@common/constants';
-import { ProductService } from '../service/products.service';
-import { ProductManager } from '../models/products';
-import { PRODUCT_SERVICE_SYMBOL } from '../tokens';
+import { ProductManager } from '../models/products.service';
 import { getProductsQuerySchema } from '../schema/products.schema';
 import { ZodError } from 'zod';
-import { createProductSchema } from '../schema/products.schema';
-import { QueryFailedError } from 'typeorm';
+import { createProductSchema, deleteProductSchema, updateProductSchema } from '../schema/products.schema';
+import { QueryFailedError, UpdateDateColumn } from 'typeorm';
+import { parse } from 'dotenv';
 
 @injectable()
 export class ProductsController {
-  private readonly createdResourceCounter: Counter;
-
+  private readonly createdProductCounter: Counter;
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(ProductManager) private readonly manager: ProductManager,
-    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
-    @inject(PRODUCT_SERVICE_SYMBOL) private readonly productService: ProductService
+    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry
+    // @inject(PRODUCT_SERVICE_SYMBOL) private readonly ProductManager: ProductManager
   ) {
     const existingMetric = this.metricsRegistry.getSingleMetric('created_resource');
 
-    this.createdResourceCounter =
+    this.createdProductCounter =
       (existingMetric as Counter<string>) ??
       new Counter({
-        name: 'created_resource',
-        help: 'number of created resources',
+        name: 'created_product',
+        help: 'number of created products',
         registers: [this.metricsRegistry],
       });
   }
@@ -38,11 +36,16 @@ export class ProductsController {
       const hasFilters = Object.keys(req.query ?? {}).length > 0;
 
       if (!hasFilters) {
-        const allProducts = await this.productService.getAllProducts();
+        const allProducts = await this.manager.getAllProducts();
+        if (allProducts.length === 0) {
+          return res.json({
+            message: 'There is no products',
+          });
+        }
         return res.json(allProducts);
       }
       const parsed = getProductsQuerySchema.parse(req.query);
-      const productsByQyery = await this.productService.getFilteredProducts(parsed);
+      const productsByQyery = await this.manager.getFilteredProducts(parsed);
       return res.json(productsByQyery);
     } catch (error) {
       return next(error);
@@ -50,27 +53,23 @@ export class ProductsController {
   };
 
   public createProducts: TypedRequestHandlers['POST /products'] = async (req, res, next) => {
-    const createdResource = this.manager.createProduct(req.body);
     try {
       const parsedBody = createProductSchema.parse(req.body);
-      const createProduct = await this.productService.createProduct({
-        name: parsedBody.name,
-        bounding_polygon: parsedBody.bounding_polygon,
-        type: parsedBody.type,
-        consumption_protocol: parsedBody.consumption_protocol,
-        consumption_link: parsedBody.consumption_link ?? null,
-        description: parsedBody.description ?? null,
-        resolution_best: parsedBody.resolution_best ?? null,
-        min_zoom: parsedBody.min_zoom ?? null,
-        max_zoom: parsedBody.max_zoom ?? null,
-      });
+      const createdProduct = await this.manager.createProduct(parsedBody);
+
       res.status(201).json({
         message: 'New product created',
-        // data: createProduct,
+        id: createdProduct.id,
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({});
+        return res.status(400).json({
+          message: 'Validation failed',
+          errors: error.issues.map((issue) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        });
       } else if (error instanceof QueryFailedError) {
         if (error.driverError.code == '23514' && error.driverError.constraint == 'check_polygon') {
           const field = 'bounding_polygon';
@@ -84,6 +83,71 @@ export class ProductsController {
         });
       }
 
+      next(error);
+    }
+  };
+
+  public updateProduct: TypedRequestHandlers['PUT /products/{id}'] = async (req, res, next) => {
+    try {
+      const parsedBody = updateProductSchema.parse(req.body);
+      const id = req.params.id;
+      const updateProduct = await this.manager.updateProduct(id as string, parsedBody);
+      res.status(200).json({
+        message: `Producet updated`,
+        id: id,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return res.status(404).json({
+          message: error.message,
+        });
+      } else if (error instanceof ZodError) {
+        return res.status(400).json({
+          message: 'Validation error',
+          errors: error.issues.map((issue) => {
+            const field = issue.path.join('.');
+            return {
+              field: field,
+              message: issue.message,
+            };
+          }),
+        });
+      } else if (error instanceof QueryFailedError) {
+        {
+          if (error.driverError.code == '23514' && error.driverError.constraint == 'check_polygon') {
+            return res.status(400).json({
+              message: 'bounding_polygon broken',
+            });
+          }
+          return res.status(400).json({
+            message: 'Invalid request',
+          });
+        }
+      }
+      next(error);
+    }
+  };
+
+  public deleteProduct: TypedRequestHandlers['DELETE /products/{id}'] = async (req, res, next) => {
+    try {
+      const parsedBody = deleteProductSchema.parse(req.body);
+      const id = parsedBody.id;
+      const deletedProduct = await this.manager.deleteProduct(id as string);
+      console.log('Check');
+
+      return res.json({
+        data: deletedProduct,
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          message: 'Validation failed',
+          errors: error.issues.map((issue) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        });
+      }
       next(error);
     }
   };

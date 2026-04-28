@@ -84,6 +84,75 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+  /products/{id}:
+    put:
+      operationId: updateProduct
+      tags:
+        - products
+      summary: update product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProduct'
+      responses:
+        200:
+          description: updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        404:
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+    delete:
+      operationId: deleteProduct
+      tags:
+        - products
+      summary: delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletedProductResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        404:
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
 security:
   - {}
 components:
@@ -110,11 +179,20 @@ components:
                 type: number
     error:
       type: object
-      required:
-        - message
       properties:
         message:
           type: string
+        data:
+          type: object
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
     Product:
       type: object
       properties:
@@ -124,29 +202,26 @@ components:
         name:
           type: string
           maxLength: 48
-
         description:
           type: string
-
+          nullable: true
         bounding_polygon:
           $ref: '#/components/schemas/GeoJsonPolygon'
-
         consumption_link:
           type: string
           nullable: true
-
         resolution_best:
           type: number
+          nullable: true
           format: double
-
         min_zoom:
           type: integer
+          nullable: true
           minimum: 0
-
         max_zoom:
           type: integer
+          nullable: true
           minimum: 0
-
         type:
           type: string
           enum:
@@ -154,7 +229,6 @@ components:
             - rasterized_vector
             - tiles3d
             - QMesh
-
         consumption_protocol:
           type: string
           enum:
@@ -166,6 +240,37 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Product'
+    UpdateProduct:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 48
+        description:
+          type: string
+          nullable: true
+        bounding_polygon:
+          $ref: '#/components/schemas/GeoJsonPolygon'
+        consumption_link:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [raster, rasterized_vector, tiles3d, QMesh]
+        consumption_protocol:
+          type: string
+          enum: [WMS, WMTS, XYZ, '3D Tiles']
+        resolution_best:
+          type: number
+        min_zoom:
+          type: integer
+        max_zoom:
+          type: integer
+    DeletedProductResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Product'
     anotherResource:
       type: object
       required:

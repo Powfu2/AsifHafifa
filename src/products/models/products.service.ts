@@ -1,10 +1,14 @@
 import { And, ILike, MoreThan, LessThan, MoreThanOrEqual, LessThanOrEqual, FindOperator } from 'typeorm';
+import type { Logger } from '@map-colonies/js-logger';
+import type { components } from '@openapi';
+import { SERVICES } from '@common/constants';
 import { AppDataSource } from '@src/common/db/data-source.js';
-import { ProductEntity } from '../models/entity.products.js';
+import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
-import { PRODUCT_ROUTER_SYMBOL } from '../routes/products.js';
-import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
+// import { PRODUCT_ROUTER_SYMBOL } from '../routes/products.js';
+// import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
+import { createProductSchema } from '../schema/products.schema';
 
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;
@@ -12,19 +16,12 @@ function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined 
   return And(...ops);
 }
 
-@injectable()
-export class ProductService {
-  public constructor(
-    @inject(PRODUCT_REPOSITORY_SYMBOL)
-    private readonly productService: ProductService
-  ) {}
+export type ProductModel = components['schemas']['Product'];
+export type ProductsModel = components['schemas']['Products'];
 
-  public async createProduct(data: Partial<ProductEntity>) {
-    const repo = AppDataSource.getRepository(ProductEntity);
-    const product = repo.create(data);
-    const savedProduct = await repo.save(product);
-    return savedProduct;
-  }
+@injectable()
+export class ProductManager {
+  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
   public async getAllProducts() {
     const repo = AppDataSource.getRepository(ProductEntity);
@@ -66,10 +63,54 @@ export class ProductService {
     return repo.find({ where });
   }
 
-  public async updateProduct(id: string, data: Partial<ProductEntity>) {
+  public async createProduct(data: Partial<ProductEntity>) {
+    const productToCreate = {
+      name: data.name,
+      bounding_polygon: data.bounding_polygon,
+      type: data.type,
+      consumption_protocol: data.consumption_protocol,
+      consumption_link: data.consumption_link ?? null,
+      description: data.description ?? null,
+      resolution_best: data.resolution_best ?? null,
+      min_zoom: data.min_zoom ?? null,
+      max_zoom: data.max_zoom ?? null,
+    };
+
     const repo = AppDataSource.getRepository(ProductEntity);
-    const result = await repo.update(id, data);
-    if (result.affected === 0) throw new Error(`Product with ID ${id} not found`);
+    const product = repo.create(productToCreate);
+    const savedProduct = await repo.save(product);
+    return savedProduct;
+  }
+
+  public async updateProduct(id: string, data: Partial<ProductEntity>) {
+    const productToUpdate = {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.bounding_polygon !== undefined && { bounding_polygon: data.bounding_polygon }),
+      ...(data.type !== undefined && { type: data.type }),
+      ...(data.consumption_protocol !== undefined && { consumption_protocol: data.consumption_protocol }),
+      ...(data.consumption_link !== undefined && { consumption_link: data.consumption_link }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.resolution_best !== undefined && { resolution_best: data.resolution_best }),
+      ...(data.min_zoom !== undefined && { min_zoom: data.min_zoom }),
+      ...(data.max_zoom !== undefined && { max_zoom: data.max_zoom }),
+    };
+
+    const repo = AppDataSource.getRepository(ProductEntity);
+    const result = await repo.update(id, productToUpdate);
+    if (result.affected === 0) throw new Error(`ID: ${id} not found`);
+
     return result;
+  }
+
+  public async deleteProduct(id: string) {
+    const repo = AppDataSource.getRepository(ProductEntity);
+    const productRemove = await repo.findOneBy({
+      id: id,
+    });
+    if (!productRemove) {
+      throw Error('Product not found');
+    }
+    await repo.remove(productRemove);
+    return productRemove;
   }
 }
