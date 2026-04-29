@@ -4,7 +4,7 @@ import { injectable, inject } from 'tsyringe';
 import { type Registry, Counter } from 'prom-client';
 import type { TypedRequestHandlers } from '@openapi';
 import { SERVICES } from '@common/constants';
-import { ProductManager } from '../models/products.manager';
+import { ProductManager } from '../models/products';
 import { getProductsQuerySchema } from '../schema/products.schema';
 import { ZodError } from 'zod';
 import { createProductSchema, deleteProductSchema, updateProductSchema } from '../schema/products.schema';

@@ -11,7 +11,7 @@ import { getConfig } from './common/config';
 import { AppDataSource } from './common/db/data-source';
 import { ProductEntity } from './products/models/entity.products';
 import { ProductsController } from './products/controllers/products';
-import { ProductManager } from './products/models/products.manager';
+import { ProductManager } from './products/models/products';
 import { PRODUCT_CONTROLLER_SYMBOL, PRODUCT_REPOSITORY_SYMBOL, PRODUCT_SERVICE_SYMBOL } from './products/tokens';
 
 export interface RegisterOptions {

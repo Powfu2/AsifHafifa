@@ -1,6 +1,6 @@
 import { components } from '@src/openapi';
 import { Entity, Column, PrimaryGeneratedColumn, Check } from 'typeorm';
-import { ProductModel } from './products.manager';
+import { ProductModel } from './products';
 type GeoJsonPolygon = components['schemas']['GeoJsonPolygon'];
 
 export enum ProductType {

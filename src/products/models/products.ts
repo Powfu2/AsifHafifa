@@ -7,6 +7,13 @@ import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
 
+// const productInstance: IResourceNameModel = {
+//   id: 1,
+//   name: 'ronin',
+//   description: 'can you do a logistics run?',
+// };
+// export type IResourceNameModel = components['schemas']['resource'];
+
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;
   if (ops.length === 1) return ops[0];
