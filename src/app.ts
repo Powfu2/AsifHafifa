@@ -2,7 +2,6 @@ import type { Application } from 'express';
 import type { DependencyContainer } from 'tsyringe';
 import { registerExternalValues, type RegisterOptions } from './containerConfig';
 import { ServerBuilder } from './serverBuilder';
-// import { productRoutes } from './products/routes';
 import { AppDataSource } from './common/db/data-source';
 
 async function getApp(registerOptions?: RegisterOptions): Promise<[Application, DependencyContainer]> {

@@ -15,7 +15,7 @@ export const expectedSchema = {
   consumption_link: 'string | null (optional)',
 };
 
-export const deleteProductSchema = z.object({
+export const deletingProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(48),
   description: z.string().trim().max(5000),
@@ -47,6 +47,8 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = createProductSchema.partial();
+
+export const deleteProductSchema = deletingProductSchema.partial();
 
 export const getProductsQuerySchema = z.object({
   name: z.string().optional(),

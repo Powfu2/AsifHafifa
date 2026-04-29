@@ -8,8 +8,7 @@ import { ProductManager } from '../models/products.service';
 import { getProductsQuerySchema } from '../schema/products.schema';
 import { ZodError } from 'zod';
 import { createProductSchema, deleteProductSchema, updateProductSchema } from '../schema/products.schema';
-import { QueryFailedError, UpdateDateColumn } from 'typeorm';
-import { parse } from 'dotenv';
+import { QueryFailedError } from 'typeorm';
 
 @injectable()
 export class ProductsController {
@@ -18,10 +17,8 @@ export class ProductsController {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(ProductManager) private readonly manager: ProductManager,
     @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry
-    // @inject(PRODUCT_SERVICE_SYMBOL) private readonly ProductManager: ProductManager
   ) {
     const existingMetric = this.metricsRegistry.getSingleMetric('created_resource');
-
     this.createdProductCounter =
       (existingMetric as Counter<string>) ??
       new Counter({
@@ -44,6 +41,7 @@ export class ProductsController {
         }
         return res.json(allProducts);
       }
+
       const parsed = getProductsQuerySchema.parse(req.query);
       const productsByQyery = await this.manager.getFilteredProducts(parsed);
       return res.json(productsByQyery);
@@ -130,12 +128,12 @@ export class ProductsController {
 
   public deleteProduct: TypedRequestHandlers['DELETE /products/{id}'] = async (req, res, next) => {
     try {
-      const parsedBody = deleteProductSchema.parse(req.body);
+      const parsedBody = deleteProductSchema.parse(req.params);
       const id = parsedBody.id;
       const deletedProduct = await this.manager.deleteProduct(id as string);
-      console.log('Check');
 
       return res.json({
+        message: `Product ${id} was deleted successfully`,
         data: deletedProduct,
       });
     } catch (error) {

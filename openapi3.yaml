@@ -46,6 +46,39 @@ paths:
               - rasterized_vector
               - tiles3d
               - QMesh
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: bounding_polygon
+          in: query
+          schema:
+            $ref: '#/components/schemas/GeoJsonPolygon'
+        - name: consumption_link
+          in: query
+          schema:
+            type: string
+        - name: resolution_best
+          in: query
+          schema:
+            type: number
+        - name: consumption_protocol
+          in: query
+          schema:
+            type: string
+            enum:
+              - WMS
+              - WMTS
+              - XYZ
+              - 3D Tiles
+        - name: max_zoom
+          in: query
+          schema:
+            type: number
+        - name: min_zoom
+          in: query
+          schema:
+            type: number
       summary: gets the resource
       responses:
         200:
