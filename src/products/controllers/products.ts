@@ -31,7 +31,6 @@ export class ProductsController {
   public getProducts: TypedRequestHandlers['getProducts'] = async (req, res, next) => {
     try {
       const hasFilters = Object.keys(req.query ?? {}).length > 0;
-
       if (!hasFilters) {
         const allProducts = await this.manager.getAllProducts();
         if (allProducts.length === 0) {
@@ -80,7 +79,6 @@ export class ProductsController {
           message: 'Invalid request',
         });
       }
-
       next(error);
     }
   };

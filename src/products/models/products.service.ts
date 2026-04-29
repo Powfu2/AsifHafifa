@@ -6,9 +6,6 @@ import { AppDataSource } from '@src/common/db/data-source.js';
 import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
-// import { PRODUCT_ROUTER_SYMBOL } from '../routes/products.js';
-// import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
-import { createProductSchema } from '../schema/products.schema';
 
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;

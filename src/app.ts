@@ -18,7 +18,6 @@ async function getApp(registerOptions?: RegisterOptions): Promise<[Application, 
   }
 
   const app = container.resolve(ServerBuilder).build();
-
   return [app, container];
 }
 
