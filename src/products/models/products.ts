@@ -27,7 +27,7 @@ export type ProductsModel = components['schemas']['Products'];
 export class ProductManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
-  public async getAllProducts() {
+  public async getAllProducts(): Promise<ProductsModel> {
     const repo = AppDataSource.getRepository(ProductEntity);
     return repo.find();
   }
