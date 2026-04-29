@@ -14,8 +14,8 @@ import { QueryFailedError } from 'typeorm';
 export class ProductsController {
   private readonly createdProductCounter: Counter;
   public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(ProductManager) private readonly manager: ProductManager,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry
   ) {
     const existingMetric = this.metricsRegistry.getSingleMetric('created_resource');

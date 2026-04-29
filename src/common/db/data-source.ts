@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { ProductEntity } from '@src/products/models/entity.products';
 
+// Take it from CONFIG.
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',

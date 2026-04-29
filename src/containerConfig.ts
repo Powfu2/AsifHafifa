@@ -1,6 +1,7 @@
 import { getOtelMixin } from '@map-colonies/tracing-utils';
 import { trace } from '@opentelemetry/api';
 import { Registry } from 'prom-client';
+import { DataSource, Repository } from 'typeorm';
 import type { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { jsLogger } from '@map-colonies/js-logger';
 import { type InjectionObject, registerDependencies } from '@common/dependencyRegistration';
@@ -32,8 +33,15 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
     { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
-
-    { token: PRODUCT_REPOSITORY_SYMBOL, provider: { useFactory: () => AppDataSource.getRepository(ProductEntity) } },
+    {
+      token: PRODUCT_REPOSITORY_SYMBOL,
+      provider: {
+        useFactory(container): Repository<ProductEntity> {
+          const dataSource = container.resolve<DataSource>(PRODUCT_REPOSITORY_SYMBOL);
+          return dataSource.getRepository(ProductEntity);
+        },
+      },
+    },
     { token: PRODUCT_SERVICE_SYMBOL, provider: { useClass: ProductManager } },
     { token: PRODUCT_CONTROLLER_SYMBOL, provider: { useClass: ProductsController } },
     { token: PRODUCT_ROUTER_SYMBOL, provider: { useFactory: productRouterFactory } },

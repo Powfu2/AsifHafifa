@@ -1,4 +1,4 @@
-import { And, ILike, MoreThan, LessThan, MoreThanOrEqual, LessThanOrEqual, FindOperator } from 'typeorm';
+import { And, ILike, MoreThan, LessThan, MoreThanOrEqual, LessThanOrEqual, FindOperator, Repository } from 'typeorm';
 import type { Logger } from '@map-colonies/js-logger';
 import type { components } from '@openapi';
 import { SERVICES } from '@common/constants';
@@ -6,13 +6,7 @@ import { AppDataSource } from '@src/common/db/data-source.js';
 import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
-
-// const productInstance: IResourceNameModel = {
-//   id: 1,
-//   name: 'ronin',
-//   description: 'can you do a logistics run?',
-// };
-// export type IResourceNameModel = components['schemas']['resource'];
+import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
 
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;
@@ -25,15 +19,16 @@ export type ProductsModel = components['schemas']['Products'];
 
 @injectable()
 export class ProductManager {
-  public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+  public constructor(
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(PRODUCT_REPOSITORY_SYMBOL) private readonly repository: Repository<ProductEntity>
+  ) {}
 
   public async getAllProducts(): Promise<ProductsModel> {
-    const repo = AppDataSource.getRepository(ProductEntity);
-    return repo.find();
+    return await this.repository.find();
   }
 
   public async getFilteredProducts(filters: GetProductsQuery) {
-    const repo = AppDataSource.getRepository(ProductEntity);
     const where: Partial<Record<keyof ProductEntity, any>> = {};
 
     if (filters.name) where.name = ILike(`%${filters.name}%`);
@@ -64,7 +59,7 @@ export class ProductManager {
     const maxZoom = buildOperators(maxZoomOps);
     if (maxZoom) where.max_zoom = maxZoom;
 
-    return repo.find({ where });
+    return await this.repository.find({ where });
   }
 
   public async createProduct(data: Partial<ProductEntity>) {
@@ -79,10 +74,8 @@ export class ProductManager {
       min_zoom: data.min_zoom ?? null,
       max_zoom: data.max_zoom ?? null,
     };
-
-    const repo = AppDataSource.getRepository(ProductEntity);
-    const product = repo.create(productToCreate);
-    const savedProduct = await repo.save(product);
+    const product = this.repository.create(productToCreate);
+    const savedProduct = await this.repository.save(product);
     return savedProduct;
   }
 
@@ -99,22 +92,19 @@ export class ProductManager {
       ...(data.max_zoom !== undefined && { max_zoom: data.max_zoom }),
     };
 
-    const repo = AppDataSource.getRepository(ProductEntity);
-    const result = await repo.update(id, productToUpdate);
+    const result = await this.repository.update(id, productToUpdate);
     if (result.affected === 0) throw new Error(`ID: ${id} not found`);
-
     return result;
   }
 
   public async deleteProduct(id: string) {
-    const repo = AppDataSource.getRepository(ProductEntity);
-    const productRemove = await repo.findOneBy({
+    const productRemove = await this.repository.findOneBy({
       id: id,
     });
     if (!productRemove) {
       throw Error('Product not found');
     }
-    await repo.remove(productRemove);
+    await this.repository.remove(productRemove);
     return productRemove;
   }
 }
