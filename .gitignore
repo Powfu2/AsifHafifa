@@ -111,4 +111,6 @@ dist
 jest_html_reporters.html
 reports
 
+config/default.json
+
 config/local*.json

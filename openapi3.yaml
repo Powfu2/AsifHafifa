@@ -8,25 +8,6 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
-  /anotherResource:
-    get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
   /products:
     get:
       operationId: getProducts
@@ -304,13 +285,3 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Product'
-    anotherResource:
-      type: object
-      required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean

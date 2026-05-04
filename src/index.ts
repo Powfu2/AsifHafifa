@@ -14,7 +14,10 @@ void getApp()
     const port = config.get('server.port');
     const stubHealthCheck = async (): Promise<void> => Promise.resolve();
     //  Write real liveness.
-    const server = createTerminus(createServer(app), { healthChecks: { '/liveness': stubHealthCheck }, onSignal: container.resolve('onSignal') });
+    const server = createTerminus(createServer(app), {
+      healthChecks: { '/liveness': stubHealthCheck },
+      onSignal: container.resolve('onSignal'),
+    });
 
     server.listen(port, () => {
       logger.info(`app started on port ${port}`);

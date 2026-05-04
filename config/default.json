@@ -20,17 +20,23 @@
     }
   },
   "server": {
-    "port": 8080,
-    "request": {
-      "payload": {
-        "limit": "1mb"
-      }
-    },
-    "response": {
-      "compression": {
-        "enabled": true,
-        "options": null
-      }
+    "port": 8080
+  },
+  "db": {
+    "type": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "myuser",
+    "password": "mypassword",
+    "database": "mydatabase",
+    "schema": "public",
+    "synchronize": true,
+    "logging": false
+  },
+  "response": {
+    "compression": {
+      "enabled": true,
+      "options": null
     }
   }
 }

@@ -2,7 +2,6 @@ import { And, ILike, MoreThan, LessThan, MoreThanOrEqual, LessThanOrEqual, FindO
 import type { Logger } from '@map-colonies/js-logger';
 import type { components } from '@openapi';
 import { SERVICES } from '@common/constants';
-import { AppDataSource } from '@src/common/db/data-source.js';
 import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
@@ -20,8 +19,8 @@ export type ProductsModel = components['schemas']['Products'];
 @injectable()
 export class ProductManager {
   public constructor(
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(PRODUCT_REPOSITORY_SYMBOL) private readonly repository: Repository<ProductEntity>
+    @inject(PRODUCT_REPOSITORY_SYMBOL) private readonly repository: Repository<ProductEntity>,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {}
 
   public async getAllProducts(): Promise<ProductsModel> {

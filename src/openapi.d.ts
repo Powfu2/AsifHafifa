@@ -4,23 +4,6 @@
 
 import type { TypedRequestHandlers as ImportedTypedRequestHandlers } from '@map-colonies/openapi-helpers/typedRequestHandler';
 export type paths = {
-  '/anotherResource': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** gets the resource */
-    get: operations['getAnotherResource'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/products': {
     parameters: {
       query?: never;
@@ -107,10 +90,6 @@ export type components = {
     DeletedProductResponse: {
       data?: components['schemas']['Product'];
     };
-    anotherResource: {
-      kind: string;
-      isAlive: boolean;
-    };
   };
   responses: never;
   parameters: never;
@@ -120,35 +99,6 @@ export type components = {
 };
 export type $defs = Record<string, never>;
 export interface operations {
-  getAnotherResource: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['anotherResource'];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['error'];
-        };
-      };
-    };
-  };
   getProducts: {
     parameters: {
       query?: {
