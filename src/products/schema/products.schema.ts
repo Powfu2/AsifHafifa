@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { ProductType, ConsumptionProtocol } from '../models/entity.products';
 
-// export const =
-
 export const expectedSchema = {
   name: 'string',
   description: 'string',
@@ -54,14 +52,17 @@ export const getProductsQuerySchema = z.object({
   name: z.string().optional(),
   type: z.nativeEnum(ProductType).optional(),
   consumption_protocol: z.nativeEnum(ConsumptionProtocol).optional(),
+
   resolution_best_gt: z.coerce.number().optional(),
   resolution_best_lt: z.coerce.number().optional(),
   resolution_best_gte: z.coerce.number().optional(),
   resolution_best_lte: z.coerce.number().optional(),
+
   min_zoom_gt: z.coerce.number().int().optional(),
   min_zoom_lt: z.coerce.number().int().optional(),
   min_zoom_gte: z.coerce.number().int().optional(),
   min_zoom_lte: z.coerce.number().int().optional(),
+
   max_zoom_gt: z.coerce.number().int().optional(),
   max_zoom_lt: z.coerce.number().int().optional(),
   max_zoom_gte: z.coerce.number().int().optional(),

@@ -10,7 +10,7 @@ import { SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
 import { addTransactionalDataSource, initializeTransactionalContext, StorageDriver } from 'typeorm-transactional';
 import { PRODUCT_ROUTER_SYMBOL, productRouterFactory } from './products/routes/products';
-import { getConfig } from './common/config';
+import { getConfig, ConfigType } from './common/config';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { ProductEntity } from './products/models/entity.products';
 import { ProductsController } from './products/controllers/products';
@@ -29,7 +29,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const configInstance = getConfig();
   const loggerConfig = configInstance.get('telemetry.logger');
   const logger = await jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
-  const tracer = trace.getTracer(SERVICE_NAME);
   const metricsRegistry = new Registry();
 
   configInstance.initializeMetrics(metricsRegistry);
@@ -37,9 +36,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: configInstance } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
-
-    // METRICS: Avg time, how many operations been on the service, how many products got, how many errors.
-    //  Func against error Functions.
 
     {
       token: SERVICES.CLEANUP_REGISTRY,
@@ -54,13 +50,26 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     },
     {
       token: SERVICES.TRACER,
-      provider: { useValue: tracer },
-      postInjectionHook: (container): void => {
-        // const
+      provider: {
+        useFactory: instancePerContainerCachingFactory((container) => {
+          const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+          cleanupRegistry.register({ id: SERVICES.TRACER, func: getTracing().stop.bind(getTracing()) });
+          const tracer = trace.getTracer(SERVICE_NAME);
+          return tracer;
+        }),
       },
     },
-    { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
-
+    {
+      token: SERVICES.METRICS,
+      provider: {
+        useFactory: instancePerContainerCachingFactory((container) => {
+          const metricsRegistry = new Registry();
+          const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+          config.initializeMetrics(metricsRegistry);
+          return metricsRegistry;
+        }),
+      },
+    },
     {
       token: DATA_SOURCE_PROVIDER,
       provider: {

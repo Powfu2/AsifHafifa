@@ -6,37 +6,23 @@ import type { TypedRequestHandlers } from '@openapi';
 import { SERVICES } from '@common/constants';
 import { ProductManager } from '../models/products';
 import { getProductsQuerySchema } from '../schema/products.schema';
-import { ZodError } from 'zod';
 import { createProductSchema, deleteProductSchema, updateProductSchema } from '../schema/products.schema';
 import { QueryFailedError } from 'typeorm';
 
 @injectable()
 export class ProductsController {
-  private readonly createdProductCounter: Counter;
   public constructor(
     @inject(ProductManager) private readonly manager: ProductManager,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry
-  ) {
-    const existingMetric = this.metricsRegistry.getSingleMetric('created_resource');
-    this.createdProductCounter =
-      (existingMetric as Counter<string>) ??
-      new Counter({
-        name: 'created_product',
-        help: 'number of created products',
-        registers: [this.metricsRegistry],
-      });
-  }
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {}
 
-  public getProducts: TypedRequestHandlers['getProducts'] = async (req, res, next) => {
+  public getProducts: TypedRequestHandlers['GET /products'] = async (req, res, next) => {
     try {
       const hasFilters = Object.keys(req.query ?? {}).length > 0;
       if (!hasFilters) {
         const allProducts = await this.manager.getAllProducts();
-        if (allProducts.length === 0) {
-          return res.json({
-            message: 'There is no products',
-          });
+        if (!allProducts.length) {
+          res.status(200).json({ message: 'There is no products.' });
         }
         return res.json(allProducts);
       }
@@ -59,22 +45,13 @@ export class ProductsController {
         id: createdProduct.id,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Validation failed',
-          errors: error.issues.map((issue) => ({
-            field: issue.path.join('.'),
-            message: issue.message,
-          })),
-        });
-      } else if (error instanceof QueryFailedError) {
+      if (error instanceof QueryFailedError) {
         if (error.driverError.code == '23514' && error.driverError.constraint == 'check_polygon') {
           const field = 'bounding_polygon';
           return res.status(400).json({
             message: 'Invalid polygon, please insert valid polygon',
           });
         }
-
         return res.status(400).json({
           message: 'Invalid request',
         });
@@ -96,17 +73,6 @@ export class ProductsController {
       if (error instanceof Error && error.message.includes('not found')) {
         return res.status(404).json({
           message: error.message,
-        });
-      } else if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Validation error',
-          errors: error.issues.map((issue) => {
-            const field = issue.path.join('.');
-            return {
-              field: field,
-              message: issue.message,
-            };
-          }),
         });
       } else if (error instanceof QueryFailedError) {
         {
@@ -135,15 +101,6 @@ export class ProductsController {
         data: deletedProduct,
       });
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Validation failed',
-          errors: error.issues.map((issue) => ({
-            field: issue.path.join('.'),
-            message: issue.message,
-          })),
-        });
-      }
       next(error);
     }
   };

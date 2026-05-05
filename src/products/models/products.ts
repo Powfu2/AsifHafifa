@@ -6,19 +6,31 @@ import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
 import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
+import type { Tracer } from '@opentelemetry/api';
+import { ProductsModel } from './entity.products.js';
 
+//buildOperators get array of TypeORM query operators and combines them into single operator,
+// return undefined if emepty.
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;
   if (ops.length === 1) return ops[0];
   return And(...ops);
 }
 
-export type ProductModel = components['schemas']['Product'];
-export type ProductsModel = components['schemas']['Products'];
+function buildNumericOperator(gt?: number, lt?: number, gte?: number, lte?: number): FindOperator<number> | undefined {
+  const operatorsCollection: FindOperator<number>[] = [];
+  if (gt !== undefined) operatorsCollection.push(MoreThan(gt));
+  if (lt !== undefined) operatorsCollection.push(LessThan(lt));
+  if (gte !== undefined) operatorsCollection.push(MoreThanOrEqual(gte));
+  if (lte !== undefined) operatorsCollection.push(LessThanOrEqual(lte));
+  const result = buildOperators(operatorsCollection);
+  return result;
+}
 
 @injectable()
 export class ProductManager {
   public constructor(
+    @inject(SERVICES.TRACER) private readonly tracer: Tracer,
     @inject(PRODUCT_REPOSITORY_SYMBOL) private readonly repository: Repository<ProductEntity>,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {}

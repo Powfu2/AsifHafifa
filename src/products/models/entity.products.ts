@@ -1,21 +1,25 @@
 import { components } from '@src/openapi';
 import { Entity, Column, PrimaryGeneratedColumn, Check } from 'typeorm';
-import { ProductModel } from './products';
+
 type GeoJsonPolygon = components['schemas']['GeoJsonPolygon'];
+export type ProductModel = components['schemas']['Product'];
+export type ProductsModel = components['schemas']['Products'];
 
-export enum ProductType {
-  raster = 'raster',
-  rasterized_vector = 'rasterized_vector',
-  tiles3d = 'tiles3d',
-  QMesh = 'QMesh',
-}
+export const ProductType = {
+  raster: 'raster',
+  rasterized_vector: 'rasterized_vector',
+  tiles3d: 'tiles3d',
+  QMesh: 'QMesh',
+} as const satisfies Record<string, string>;
+export type ProductType = (typeof ProductType)[keyof typeof ProductType];
 
-export enum ConsumptionProtocol {
-  WMS = 'WMS',
-  WMTS = 'WMTS',
-  XYZ = 'XYZ',
-  TILES_3D = '3D Tiles',
-}
+export const ConsumptionProtocol = {
+  WMS: 'WMS',
+  WMTS: 'WMTS',
+  XYZ: 'XYZ',
+  TILES_3D: '3D Tiles',
+} as const satisfies Record<string, string>;
+export type ConsumptionProtocol = (typeof ConsumptionProtocol)[keyof typeof ConsumptionProtocol];
 
 @Entity({ name: 'products' })
 @Check(`check_polygon`, `ST_IsValid(bounding_polygon)`)
@@ -44,12 +48,14 @@ export class ProductEntity implements ProductModel {
 
   @Column({
     type: 'enum',
+    nullable: true,
     enum: ProductType,
   })
   type!: ProductType;
 
   @Column({
     type: 'enum',
+    nullable: true,
     enum: ConsumptionProtocol,
   })
   consumption_protocol!: ConsumptionProtocol;

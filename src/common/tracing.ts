@@ -28,3 +28,4 @@ export function getTracing(): Tracing {
   }
   return tracing;
 }
+getTracing;

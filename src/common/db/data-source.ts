@@ -16,19 +16,6 @@ const DB_TIMEOUT = 5000;
 
 export const DATA_SOURCE_PROVIDER = Symbol('dataSourceProvider');
 
-// export const AppDataSource = new DataSource({
-//   type: 'postgres',
-//   host: 'localhost',
-//   port: 5432,
-//   username: 'myuser',
-//   password: 'mypassword',
-//   database: 'mydatabase',
-//   schema: 'public',
-//   synchronize: true,
-//   logging: false,
-//   entities: [ProductEntity],
-// });
-
 export const createDataSourceOptions = (dbConfig: DbConfig): DataSourceOptions => {
   const { enableSslAuth, sslPaths, ...dataSourceOptions } = dbConfig;
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -43,7 +30,6 @@ export const createDataSourceOptions = (dbConfig: DbConfig): DataSourceOptions =
 export const getCachedDataSource = (dbConfig: DbConfig): DataSource => {
   if (connectionSingleton === undefined) {
     connectionSingleton = new DataSource(createDataSourceOptions(dbConfig));
-    // console.log('DataSource options entities:', connectionSingleton.options.entities);
   }
   return connectionSingleton;
 };
