@@ -4,6 +4,7 @@ import { Entity, Column, PrimaryGeneratedColumn, Check } from 'typeorm';
 type GeoJsonPolygon = components['schemas']['GeoJsonPolygon'];
 export type ProductModel = components['schemas']['Product'];
 export type ProductsModel = components['schemas']['Products'];
+export const PRODUCT_REPOSITORY_SYMBOL = Symbol('ProductRepository');
 
 export const ProductType = {
   raster: 'raster',

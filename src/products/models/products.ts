@@ -5,9 +5,10 @@ import { SERVICES } from '@common/constants';
 import { ProductEntity } from './entity.products.js';
 import type { GetProductsQuery } from '../schema/products.schema.js';
 import { inject, injectable } from 'tsyringe';
-import { PRODUCT_REPOSITORY_SYMBOL } from '../tokens.js';
+import { PRODUCT_REPOSITORY_SYMBOL } from './entity.products.js';
 import type { Tracer } from '@opentelemetry/api';
 import { ProductsModel } from './entity.products.js';
+import { EmeptyResponse, ProductNotFound } from '@src/common/errors.js';
 
 //buildOperators get array of TypeORM query operators and combines them into single operator,
 // return undefined if emepty.
@@ -36,49 +37,41 @@ export class ProductManager {
   ) {}
 
   public async getAllProducts(): Promise<ProductsModel> {
-    return await this.repository.find();
+    const allProducts = await this.repository.find();
+
+    if (allProducts.length === 0) {
+      throw new EmeptyResponse('There is no products.');
+    }
+    return allProducts;
   }
 
   public async getFilteredProducts(filters: GetProductsQuery) {
     const where: Partial<Record<keyof ProductEntity, any>> = {};
 
-    if (filters.name) where.name = ILike(`%${filters.name}%`);
+    if (filters.name) where.name = `${filters.name}`;
     if (filters.type) where.type = filters.type;
     if (filters.consumption_protocol) where.consumption_protocol = filters.consumption_protocol;
 
-    const resolutionOps: FindOperator<number>[] = [];
-    if (filters.resolution_best_gt !== undefined) resolutionOps.push(MoreThan(filters.resolution_best_gt));
-    if (filters.resolution_best_lt !== undefined) resolutionOps.push(LessThan(filters.resolution_best_lt));
-    if (filters.resolution_best_gte !== undefined) resolutionOps.push(MoreThanOrEqual(filters.resolution_best_gte));
-    if (filters.resolution_best_lte !== undefined) resolutionOps.push(LessThanOrEqual(filters.resolution_best_lte));
-    const resolution = buildOperators(resolutionOps);
+    const resolution = buildNumericOperator(
+      filters.resolution_best_gt,
+      filters.resolution_best_lt,
+      filters.resolution_best_gte,
+      filters.resolution_best_lte
+    );
     if (resolution) where.resolution_best = resolution;
 
-    const minZoomOps: FindOperator<number>[] = [];
-    if (filters.min_zoom_gt !== undefined) minZoomOps.push(MoreThan(filters.min_zoom_gt));
-    if (filters.min_zoom_lt !== undefined) minZoomOps.push(LessThan(filters.min_zoom_lt));
-    if (filters.min_zoom_gte !== undefined) minZoomOps.push(MoreThanOrEqual(filters.min_zoom_gte));
-    if (filters.min_zoom_lte !== undefined) minZoomOps.push(LessThanOrEqual(filters.min_zoom_lte));
-    const minZoom = buildOperators(minZoomOps);
-    if (minZoom) where.min_zoom = minZoom;
+    const minZoomOps = buildNumericOperator(filters.min_zoom_gt, filters.min_zoom_lt, filters.min_zoom_gte, filters.min_zoom_lte);
+    if (minZoomOps) where.min_zoom = minZoomOps;
 
-    const maxZoomOps: FindOperator<number>[] = [];
-    if (filters.max_zoom_gt !== undefined) maxZoomOps.push(MoreThan(filters.max_zoom_gt));
-    if (filters.max_zoom_lt !== undefined) maxZoomOps.push(LessThan(filters.max_zoom_lt));
-    if (filters.max_zoom_gte !== undefined) maxZoomOps.push(MoreThanOrEqual(filters.max_zoom_gte));
-    if (filters.max_zoom_lte !== undefined) maxZoomOps.push(LessThanOrEqual(filters.max_zoom_lte));
-    const maxZoom = buildOperators(maxZoomOps);
-    if (maxZoom) where.max_zoom = maxZoom;
+    const maxZoomsOps = buildNumericOperator(filters.max_zoom_gt, filters.max_zoom_lt, filters.max_zoom_gte, filters.max_zoom_lte);
+    if (maxZoomsOps) where.max_zoom = maxZoomsOps;
 
     return await this.repository.find({ where });
   }
 
   public async createProduct(data: Partial<ProductEntity>) {
     const productToCreate = {
-      name: data.name,
-      bounding_polygon: data.bounding_polygon,
-      type: data.type,
-      consumption_protocol: data.consumption_protocol,
+      ...data,
       consumption_link: data.consumption_link ?? null,
       description: data.description ?? null,
       resolution_best: data.resolution_best ?? null,
@@ -104,7 +97,7 @@ export class ProductManager {
     };
 
     const result = await this.repository.update(id, productToUpdate);
-    if (result.affected === 0) throw new Error(`ID: ${id} not found`);
+    if (result.affected === 0) throw new ProductNotFound(`Cant update is: ${id}, id was not found`);
     return result;
   }
 
@@ -113,9 +106,11 @@ export class ProductManager {
       id: id,
     });
     if (!productRemove) {
-      throw Error('Product not found');
+      throw new ProductNotFound(`Cant delete ${id},  was not found`);
     }
     await this.repository.remove(productRemove);
     return productRemove;
   }
 }
+
+export const PRODUCT_SERVICE_SYMBOL = Symbol('ProductService');

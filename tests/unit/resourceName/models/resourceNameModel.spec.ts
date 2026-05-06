@@ -4,7 +4,7 @@ import { ProductManager } from '@src/products/models/products';
 
 let resourceNameManager: ProductManager;
 
-describe('ResourceNameManager', () => {
+describe('ProductManager', () => {
   beforeEach(async function () {
     resourceNameManager = new ProductManager(await jsLogger({ enabled: false }));
   });
@@ -12,10 +12,10 @@ describe('ResourceNameManager', () => {
   describe('#getResource', () => {
     it('should return the resource of id 1', function () {
       // action
-      const resource = resourceNameManager.getAllProducts();
+      const resource = ProductManager.getAllProducts();
 
       // expectation
-      expect(resource.id).toBe(1);
+      expect(resource[0].id).toBe(1);
       expect(resource.name).toBe('ronin');
       expect(resource.description).toBe('can you do a logistics run?');
     });

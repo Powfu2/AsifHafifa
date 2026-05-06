@@ -35,15 +35,14 @@ describe('resourceName', function () {
       const resource = response.body as paths['/products']['get']['responses'][200]['content']['application/json'];
 
       expect(response).toSatisfyApiSpec();
-      expect(resource.id).toBe('19c7d6ba-3979-46b0-81da-394021756dd0');
-      expect(resource.name).toBe('ronin');
-      expect(resource.description).toBe('can you do a logistics run?');
+      expect(resource[0].id).toBe('237f8676-08a0-4617-83b8-81ad661e80a3');
+      expect(resource[0].name).toBe('sss');
+      expect(resource[0].description).toBe('valid description');
     });
 
     it('should return 200 status code and create the resource', async function () {
-      const response = await requestSender.createProducts({
+      const response = await requestSender.createProduct({
         requestBody: {
-          id: '19c7d6ba-3979-46b0-81da-394021756dd0',
           name: 'sssss3',
           description: 'valid description',
           bounding_polygon: {

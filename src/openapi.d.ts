@@ -11,7 +11,7 @@ export type paths = {
       path?: never;
       cookie?: never;
     };
-    /** gets the resource */
+    /** get the products */
     get: operations['getProducts'];
     put?: never;
     /** creates a new record of type product */
@@ -91,7 +91,17 @@ export type components = {
       data?: components['schemas']['Product'];
     };
   };
-  responses: never;
+  responses: {
+    /** @description Unexpected internal server error */
+    InternalServerError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['error'];
+      };
+    };
+  };
   parameters: never;
   requestBodies: never;
   headers: never;
@@ -105,7 +115,11 @@ export interface operations {
         name?: string;
         type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
         description?: string;
-        bounding_polygon?: components['schemas']['GeoJsonPolygon'];
+        bounding_polygon?: {
+          /** @enum {string} */
+          type?: 'Polygon';
+          coordinates?: number[][][];
+        };
         consumption_link?: string;
         resolution_best?: number;
         consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
@@ -118,7 +132,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description A JSON array of products */
+      /** @description Success */
       200: {
         headers: {
           [name: string]: unknown;
@@ -136,6 +150,7 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
     };
   };
   createProduct: {
@@ -169,6 +184,7 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
     };
   };
   updateProduct: {
@@ -213,6 +229,7 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
     };
   };
   deleteProduct: {
@@ -253,6 +270,7 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
     };
   };
 }

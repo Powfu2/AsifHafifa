@@ -15,7 +15,9 @@ import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { ProductEntity } from './products/models/entity.products';
 import { ProductsController } from './products/controllers/products';
 import { ProductManager } from './products/models/products';
-import { PRODUCT_CONTROLLER_SYMBOL, PRODUCT_REPOSITORY_SYMBOL, PRODUCT_SERVICE_SYMBOL } from './products/tokens';
+import { PRODUCT_CONTROLLER_SYMBOL } from './products/controllers/products';
+import { PRODUCT_REPOSITORY_SYMBOL } from './products/models/entity.products';
+import { PRODUCT_SERVICE_SYMBOL } from './products/models/products';
 import { DATA_SOURCE_PROVIDER } from './common/db/data-source';
 import { dataSourceFactory } from './common/db/data-source';
 

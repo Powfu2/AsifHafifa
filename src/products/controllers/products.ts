@@ -9,6 +9,8 @@ import { getProductsQuerySchema } from '../schema/products.schema';
 import { createProductSchema, deleteProductSchema, updateProductSchema } from '../schema/products.schema';
 import { QueryFailedError } from 'typeorm';
 
+export const PRODUCT_CONTROLLER_SYMBOL = Symbol('ProductController');
+
 @injectable()
 export class ProductsController {
   public constructor(
@@ -21,9 +23,6 @@ export class ProductsController {
       const hasFilters = Object.keys(req.query ?? {}).length > 0;
       if (!hasFilters) {
         const allProducts = await this.manager.getAllProducts();
-        if (!allProducts.length) {
-          res.status(200).json({ message: 'There is no products.' });
-        }
         return res.json(allProducts);
       }
 
@@ -70,11 +69,7 @@ export class ProductsController {
         id: id,
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('not found')) {
-        return res.status(404).json({
-          message: error.message,
-        });
-      } else if (error instanceof QueryFailedError) {
+      if (error instanceof QueryFailedError) {
         {
           if (error.driverError.code == '23514' && error.driverError.constraint == 'check_polygon') {
             return res.status(400).json({
