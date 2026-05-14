@@ -115,11 +115,7 @@ export interface operations {
         name?: string;
         type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
         description?: string;
-        bounding_polygon?: {
-          /** @enum {string} */
-          type?: 'Polygon';
-          coordinates?: number[][][];
-        };
+        bounding_polygon?: string;
         consumption_link?: string;
         resolution_best?: number;
         consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';

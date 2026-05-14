@@ -8,7 +8,7 @@ import { inject, injectable } from 'tsyringe';
 import type { Logger } from '@map-colonies/js-logger';
 import { httpLogger } from '@map-colonies/express-access-log-middleware';
 import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
-import { Registry } from 'prom-client';
+import { Registry as PromRegistry } from 'prom-client';
 import type { ConfigType } from '@common/config';
 import { SERVICES } from '@common/constants';
 import { PRODUCT_ROUTER_SYMBOL } from './products/routes/products';
@@ -19,7 +19,7 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
+    @inject(SERVICES.METRICS) private readonly metricsRegistry: PromRegistry,
     @inject(PRODUCT_ROUTER_SYMBOL) private readonly productsRouter: Router
   ) {
     this.serverInstance = express();

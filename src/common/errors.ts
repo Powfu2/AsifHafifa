@@ -22,3 +22,5 @@ export class ProductNotFound extends BaseHttpError {
     super(message, StatusCodes.NOT_FOUND);
   }
 }
+
+export const ExitCodes = {};

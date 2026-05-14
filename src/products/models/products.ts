@@ -9,9 +9,10 @@ import { PRODUCT_REPOSITORY_SYMBOL } from './entity.products.js';
 import type { Tracer } from '@opentelemetry/api';
 import { ProductsModel } from './entity.products.js';
 import { EmeptyResponse, ProductNotFound } from '@src/common/errors.js';
+import { Registry as PromRegistry, Histogram, Counter as PromCounter } from 'prom-client';
+import { handleSpanOnSuccess, handleSpanOnError } from '@src/common/tracing/util.js';
 
 //buildOperators get array of TypeORM query operators and combines them into single operator,
-// return undefined if emepty.
 function buildOperators<T>(ops: FindOperator<T>[]): FindOperator<T> | undefined {
   if (ops.length === 0) return undefined;
   if (ops.length === 1) return ops[0];
@@ -30,43 +31,92 @@ function buildNumericOperator(gt?: number, lt?: number, gte?: number, lte?: numb
 
 @injectable()
 export class ProductManager {
+  private readonly operationCounter?: PromCounter;
+  private readonly operationDurationHistogram?: Histogram;
+
   public constructor(
     @inject(SERVICES.TRACER) private readonly tracer: Tracer,
     @inject(PRODUCT_REPOSITORY_SYMBOL) private readonly repository: Repository<ProductEntity>,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger
-  ) {}
+    @inject(SERVICES.LOGGER) private readonly logger: Logger,
+    @inject(SERVICES.METRICS) private readonly registry?: PromRegistry
+  ) {
+    if (registry !== undefined) {
+      this.operationCounter = new PromCounter({
+        name: 'product_operation_count',
+        help: 'Total number of product CRUD operations',
+        labelNames: ['operation', 'status'] as const,
+        registers: [registry],
+      });
+
+      this.operationDurationHistogram = new Histogram({
+        name: 'product_operation_duration_seconds',
+        help: 'Duration of product operations in seconds',
+        labelNames: ['operation'] as const,
+        buckets: [0.05, 0.1, 0.3, 0.5, 1, 2, 5],
+        registers: [registry],
+      });
+    }
+  }
 
   public async getAllProducts(): Promise<ProductsModel> {
-    const allProducts = await this.repository.find();
-
-    if (allProducts.length === 0) {
-      throw new EmeptyResponse('There is no products.');
-    }
-    return allProducts;
+    return this.tracer.startActiveSpan('product.getAll', { attributes: { 'http.method': 'GET' } }, async (span) => {
+      try {
+        const allProducts = await this.repository.find();
+        span.setAttribute('products.count', allProducts.length);
+        span.setAttribute('db.operation', 'find');
+        span.setAttribute('db.table', 'products');
+        if (allProducts.length === 0) {
+          throw new EmeptyResponse('There is no products.');
+        }
+        handleSpanOnSuccess(span);
+        return allProducts;
+      } catch (error) {
+        handleSpanOnError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   public async getFilteredProducts(filters: GetProductsQuery) {
-    const where: Partial<Record<keyof ProductEntity, any>> = {};
+    return this.tracer.startActiveSpan('product.getFilteredProducts', { attributes: { 'http.method': 'GET' } }, async (span) => {
+      try {
+        const where: Partial<Record<keyof ProductEntity, any>> = {};
 
-    if (filters.name) where.name = `${filters.name}`;
-    if (filters.type) where.type = filters.type;
-    if (filters.consumption_protocol) where.consumption_protocol = filters.consumption_protocol;
+        span.setAttribute('db.operation', 'find');
+        span.setAttribute('db.table', 'products');
+        span.setAttribute('filter.name', filters.name ?? 'none');
+        span.setAttribute('filter.type', filters.type ?? 'none');
+        span.setAttribute('filter.count', Object.keys(filters).filter((k) => filters[k as keyof GetProductsQuery] !== undefined).length);
 
-    const resolution = buildNumericOperator(
-      filters.resolution_best_gt,
-      filters.resolution_best_lt,
-      filters.resolution_best_gte,
-      filters.resolution_best_lte
-    );
-    if (resolution) where.resolution_best = resolution;
+        if (filters.name) where.name = `${filters.name}`;
+        if (filters.type) where.type = filters.type;
+        if (filters.consumption_protocol) where.consumption_protocol = filters.consumption_protocol;
 
-    const minZoomOps = buildNumericOperator(filters.min_zoom_gt, filters.min_zoom_lt, filters.min_zoom_gte, filters.min_zoom_lte);
-    if (minZoomOps) where.min_zoom = minZoomOps;
+        const resolution = buildNumericOperator(
+          filters.resolution_best_gt,
+          filters.resolution_best_lt,
+          filters.resolution_best_gte,
+          filters.resolution_best_lte
+        );
+        if (resolution) where.resolution_best = resolution;
 
-    const maxZoomsOps = buildNumericOperator(filters.max_zoom_gt, filters.max_zoom_lt, filters.max_zoom_gte, filters.max_zoom_lte);
-    if (maxZoomsOps) where.max_zoom = maxZoomsOps;
+        const minZoomOps = buildNumericOperator(filters.min_zoom_gt, filters.min_zoom_lt, filters.min_zoom_gte, filters.min_zoom_lte);
+        if (minZoomOps) where.min_zoom = minZoomOps;
 
-    return await this.repository.find({ where });
+        const maxZoomsOps = buildNumericOperator(filters.max_zoom_gt, filters.max_zoom_lt, filters.max_zoom_gte, filters.max_zoom_lte);
+        if (maxZoomsOps) where.max_zoom = maxZoomsOps;
+
+        handleSpanOnSuccess(span);
+        return await this.repository.find({ where });
+      } catch (error) {
+        handleSpanOnError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   public async createProduct(data: Partial<ProductEntity>) {
