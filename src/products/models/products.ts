@@ -120,46 +120,101 @@ export class ProductManager {
   }
 
   public async createProduct(data: Partial<ProductEntity>) {
-    const productToCreate = {
-      ...data,
-      consumption_link: data.consumption_link ?? null,
-      description: data.description ?? null,
-      resolution_best: data.resolution_best ?? null,
-      min_zoom: data.min_zoom ?? null,
-      max_zoom: data.max_zoom ?? null,
-    };
-    const product = this.repository.create(productToCreate);
-    const savedProduct = await this.repository.save(product);
-    return savedProduct;
+    return this.tracer.startActiveSpan('product.create', async (span) => {
+      try {
+        span.setAttribute('db.operation', 'insert');
+        span.setAttribute('db.table', 'products');
+        span.setAttribute('product.type', data.type ?? 'unknown');
+
+        const productToCreate = {
+          ...data,
+          consumption_link: data.consumption_link ?? null,
+          description: data.description ?? null,
+          resolution_best: data.resolution_best ?? null,
+          min_zoom: data.min_zoom ?? null,
+          max_zoom: data.max_zoom ?? null,
+        };
+
+        const product = this.repository.create(productToCreate);
+        const savedProduct = await this.repository.save(product);
+
+        span.setAttribute('product.id', savedProduct.id);
+
+        handleSpanOnSuccess(span);
+        return savedProduct;
+      } catch (error) {
+        handleSpanOnError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   public async updateProduct(id: string, data: Partial<ProductEntity>) {
-    const productToUpdate = {
-      ...(data.name !== undefined && { name: data.name }),
-      ...(data.bounding_polygon !== undefined && { bounding_polygon: data.bounding_polygon }),
-      ...(data.type !== undefined && { type: data.type }),
-      ...(data.consumption_protocol !== undefined && { consumption_protocol: data.consumption_protocol }),
-      ...(data.consumption_link !== undefined && { consumption_link: data.consumption_link }),
-      ...(data.description !== undefined && { description: data.description }),
-      ...(data.resolution_best !== undefined && { resolution_best: data.resolution_best }),
-      ...(data.min_zoom !== undefined && { min_zoom: data.min_zoom }),
-      ...(data.max_zoom !== undefined && { max_zoom: data.max_zoom }),
-    };
+    return this.tracer.startActiveSpan('product.update', async (span) => {
+      try {
+        span.setAttribute('db.operation', 'update');
+        span.setAttribute('db.table', 'products');
+        span.setAttribute('product.id', id);
+        span.setAttribute('update.fields', Object.keys(data).join(', '));
 
-    const result = await this.repository.update(id, productToUpdate);
-    if (result.affected === 0) throw new ProductNotFound(`Cant update is: ${id}, id was not found`);
-    return result;
+        const productToUpdate = {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.bounding_polygon !== undefined && { bounding_polygon: data.bounding_polygon }),
+          ...(data.type !== undefined && { type: data.type }),
+          ...(data.consumption_protocol !== undefined && { consumption_protocol: data.consumption_protocol }),
+          ...(data.consumption_link !== undefined && { consumption_link: data.consumption_link }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.resolution_best !== undefined && { resolution_best: data.resolution_best }),
+          ...(data.min_zoom !== undefined && { min_zoom: data.min_zoom }),
+          ...(data.max_zoom !== undefined && { max_zoom: data.max_zoom }),
+        };
+
+        const result = await this.repository.update(id, productToUpdate);
+
+        span.setAttribute('db.affected_rows', result.affected ?? 0);
+
+        if (result.affected === 0) throw new ProductNotFound(`Cant update is: ${id}, id was not found`);
+
+        handleSpanOnSuccess(span);
+        return result;
+      } catch (error) {
+        handleSpanOnError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
   }
 
   public async deleteProduct(id: string) {
-    const productRemove = await this.repository.findOneBy({
-      id: id,
+    return this.tracer.startActiveSpan('product.delete', async (span) => {
+      try {
+        span.setAttribute('db.operation', 'delete');
+        span.setAttribute('db.table', 'products');
+        span.setAttribute('product.id', id);
+
+        const productRemove = await this.repository.findOneBy({ id });
+
+        if (!productRemove) {
+          throw new ProductNotFound(`Cant delete ${id}, was not found`);
+        }
+
+        await this.repository.remove(productRemove);
+
+        span.setAttribute('product.name', productRemove.name);
+        span.setAttribute('product.type', productRemove.type);
+
+        handleSpanOnSuccess(span);
+        return productRemove;
+      } catch (error) {
+        handleSpanOnError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
     });
-    if (!productRemove) {
-      throw new ProductNotFound(`Cant delete ${id},  was not found`);
-    }
-    await this.repository.remove(productRemove);
-    return productRemove;
   }
 }
 
