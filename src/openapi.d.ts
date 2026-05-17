@@ -4,36 +4,37 @@
 
 import type { TypedRequestHandlers as ImportedTypedRequestHandlers } from '@map-colonies/openapi-helpers/typedRequestHandler';
 export type paths = {
-  '/anotherResource': {
+  '/products': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** gets the resource */
-    get: operations['getAnotherResource'];
+    /** get the products */
+    get: operations['getProducts'];
     put?: never;
-    post?: never;
+    /** creates a new record of type product */
+    post: operations['createProduct'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/resourceName': {
+  '/products/{id}': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** gets the resource */
-    get: operations['getResourceName'];
-    put?: never;
-    /** creates a new record of type resource */
-    post: operations['createResource'];
-    delete?: never;
+    get?: never;
+    /** update product */
+    put: operations['updateProduct'];
+    post?: never;
+    /** delete product */
+    delete: operations['deleteProduct'];
     options?: never;
     head?: never;
     patch?: never;
@@ -43,21 +44,64 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    GeoJsonPolygon: {
+      /** @enum {string} */
+      type: 'Polygon';
+      coordinates: number[][][];
+    };
     error: {
-      message: string;
+      message?: string;
+      data?: Record<string, never>;
+      errors?: {
+        field?: string;
+        message?: string;
+      }[];
     };
-    resource: {
-      /** Format: int64 */
-      id: number;
-      name: string;
-      description: string;
+    Product: {
+      /** Format: uuid */
+      id?: string;
+      name?: string;
+      description?: string | null;
+      bounding_polygon?: components['schemas']['GeoJsonPolygon'];
+      consumption_link?: string | null;
+      /** Format: double */
+      resolution_best?: number | null;
+      min_zoom?: number | null;
+      max_zoom?: number | null;
+      /** @enum {string} */
+      type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+      /** @enum {string} */
+      consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
     };
-    anotherResource: {
-      kind: string;
-      isAlive: boolean;
+    Products: components['schemas']['Product'][];
+    UpdateProduct: {
+      name?: string;
+      description?: string | null;
+      bounding_polygon?: components['schemas']['GeoJsonPolygon'];
+      consumption_link?: string | null;
+      /** @enum {string} */
+      type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+      /** @enum {string} */
+      consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
+      resolution_best?: number;
+      min_zoom?: number;
+      max_zoom?: number;
+    };
+    DeletedProductResponse: {
+      data?: components['schemas']['Product'];
     };
   };
-  responses: never;
+  responses: {
+    /** @description Unexpected internal server error */
+    InternalServerError: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        'application/json': components['schemas']['error'];
+      };
+    };
+  };
   parameters: never;
   requestBodies: never;
   headers: never;
@@ -65,22 +109,32 @@ export type components = {
 };
 export type $defs = Record<string, never>;
 export interface operations {
-  getAnotherResource: {
+  getProducts: {
     parameters: {
-      query?: never;
+      query?: {
+        name?: string;
+        type?: 'raster' | 'rasterized_vector' | 'tiles3d' | 'QMesh';
+        description?: string;
+        bounding_polygon?: string;
+        consumption_link?: string;
+        resolution_best?: number;
+        consumption_protocol?: 'WMS' | 'WMTS' | 'XYZ' | '3D Tiles';
+        max_zoom?: number;
+        min_zoom?: number;
+      };
       header?: never;
       path?: never;
       cookie?: never;
     };
     requestBody?: never;
     responses: {
-      /** @description OK */
+      /** @description Success */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['anotherResource'];
+          'application/json': components['schemas']['Products'];
         };
       };
       /** @description Bad Request */
@@ -92,38 +146,10 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
     };
   };
-  getResourceName: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['resource'];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['error'];
-        };
-      };
-    };
-  };
-  createResource: {
+  createProduct: {
     parameters: {
       query?: never;
       header?: never;
@@ -132,7 +158,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['resource'];
+        'application/json': components['schemas']['Product'];
       };
     };
     responses: {
@@ -142,7 +168,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['resource'];
+          'application/json': components['schemas']['Product'];
         };
       };
       /** @description Bad Request */
@@ -154,6 +180,93 @@ export interface operations {
           'application/json': components['schemas']['error'];
         };
       };
+      500: components['responses']['InternalServerError'];
+    };
+  };
+  updateProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateProduct'];
+      };
+    };
+    responses: {
+      /** @description updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Product'];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      /** @description Product not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      500: components['responses']['InternalServerError'];
+    };
+  };
+  deleteProduct: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Product deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeletedProductResponse'];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      /** @description Product not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['error'];
+        };
+      };
+      500: components['responses']['InternalServerError'];
     };
   };
 }

@@ -28,24 +28,40 @@ describe('resourceName', function () {
 
   describe('Happy Path', function () {
     it('should return 200 status code and the resource', async function () {
-      const response = await requestSender.getResourceName();
+      const response = await requestSender.getProducts();
 
       expect(response.status).toBe(httpStatusCodes.OK);
 
-      const resource = response.body as paths['/resourceName']['get']['responses'][200]['content']['application/json'];
+      const resource = response.body as paths['/products']['get']['responses'][200]['content']['application/json'];
 
       expect(response).toSatisfyApiSpec();
-      expect(resource.id).toBe(1);
-      expect(resource.name).toBe('ronin');
-      expect(resource.description).toBe('can you do a logistics run?');
+      expect(resource[0].id).toBe('237f8676-08a0-4617-83b8-81ad661e80a3');
+      expect(resource[0].name).toBe('sss');
+      expect(resource[0].description).toBe('valid description');
     });
 
     it('should return 200 status code and create the resource', async function () {
-      const response = await requestSender.createResource({
+      const response = await requestSender.createProduct({
         requestBody: {
-          description: 'aaa',
-          id: 1,
-          name: 'aaa',
+          name: 'sssss3',
+          description: 'valid description',
+          bounding_polygon: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [34.78, 32.08],
+                [34.79, 32.08],
+                [34.79, 32.09],
+                [34.78, 32.08],
+              ],
+            ],
+          },
+          consumption_link: null,
+          type: 'raster',
+          consumption_protocol: 'WMS',
+          resolution_best: 1,
+          min_zoom: 1,
+          max_zoom: 10,
         },
       });
 

@@ -8,22 +8,19 @@ import { inject, injectable } from 'tsyringe';
 import type { Logger } from '@map-colonies/js-logger';
 import { httpLogger } from '@map-colonies/express-access-log-middleware';
 import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
-import { Registry } from 'prom-client';
+import { Registry as PromRegistry } from 'prom-client';
 import type { ConfigType } from '@common/config';
 import { SERVICES } from '@common/constants';
-import { RESOURCE_NAME_ROUTER_SYMBOL } from './resourceName/routes/resourceNameRouter';
-import { ANOTHER_RESOURCE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
+import { PRODUCT_ROUTER_SYMBOL } from './products/routes/products';
 
 @injectable()
 export class ServerBuilder {
   private readonly serverInstance: express.Application;
-
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
-    @inject(RESOURCE_NAME_ROUTER_SYMBOL) private readonly resourceNameRouter: Router,
-    @inject(ANOTHER_RESOURCE_ROUTER_SYMBOL) private readonly anotherResourceRouter: Router
+    @inject(SERVICES.METRICS) private readonly metricsRegistry: PromRegistry,
+    @inject(PRODUCT_ROUTER_SYMBOL) private readonly productsRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -46,8 +43,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/resourceName', this.resourceNameRouter);
-    this.serverInstance.use('/anotherResource', this.anotherResourceRouter);
+    this.serverInstance.use('/products', this.productsRouter);
     this.buildDocsRoutes();
   }
 

@@ -1,21 +1,21 @@
 import { jsLogger } from '@map-colonies/js-logger';
 import { describe, beforeEach, it, expect } from 'vitest';
-import { ResourceNameManager } from '@src/resourceName/models/resourceNameManager';
+import { ProductManager } from '@src/products/models/products';
 
-let resourceNameManager: ResourceNameManager;
+let resourceNameManager: ProductManager;
 
-describe('ResourceNameManager', () => {
+describe('ProductManager', () => {
   beforeEach(async function () {
-    resourceNameManager = new ResourceNameManager(await jsLogger({ enabled: false }));
+    resourceNameManager = new ProductManager(await jsLogger({ enabled: false }));
   });
 
   describe('#getResource', () => {
     it('should return the resource of id 1', function () {
       // action
-      const resource = resourceNameManager.getResource();
+      const resource = ProductManager.getAllProducts();
 
       // expectation
-      expect(resource.id).toBe(1);
+      expect(resource[0].id).toBe(1);
       expect(resource.name).toBe('ronin');
       expect(resource.description).toBe('can you do a logistics run?');
     });
@@ -24,7 +24,7 @@ describe('ResourceNameManager', () => {
   describe('#createResource', () => {
     it('should return the resource of id 1', function () {
       // action
-      const resource = resourceNameManager.createResource({ description: 'meow', id: 1, name: 'cat' });
+      const resource = resourceNameManager.createProduct({ description: 'meow', id: 1, name: 'cat' });
 
       // expectation
       expect(resource.id).toBeLessThanOrEqual(100);
